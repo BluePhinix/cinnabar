@@ -90,5 +90,5 @@ jobs:
           gh release delete tuned-android --yes --cleanup-tag 2>/dev/null || true
           gh release create tuned-android "$apk" \
             --title "Cinnabar tuned for Honor X6C ($(git rev-parse --short HEAD))" \
-            --notes "arm64-v8a: Cortex-A75/A55 codegen, 65% render scale, 60 FPS cap, MSAA off, 6-chunk default distance." \
+            --notes "arm64-v8a for Honor X6C: Cortex-A75/A55 codegen, 65% render scale, 60 FPS cap, MSAA off, 6-chunk default distance (the generic 6 GB heuristic picks 10)." \
             --prerelease
