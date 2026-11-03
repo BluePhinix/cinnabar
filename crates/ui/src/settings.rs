@@ -332,7 +332,7 @@ impl RenderMode {
     pub fn parse(value: &str) -> Option<Self> {
         Self::ALL
             .into_iter()
-            .find(|mode| mode.value.trim().eq_ignore_ascii_case(mode.as_str()))
+            .find(|mode| value.trim().eq_ignore_ascii_case(mode.as_str()))
     }
 
     #[must_use]
