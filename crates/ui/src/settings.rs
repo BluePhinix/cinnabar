@@ -16,7 +16,10 @@ pub const DEFAULT_FOV_DEGREES: i32 = 60;
 pub const MIN_FOV_DEGREES: i32 = 30;
 pub const MAX_FOV_DEGREES: i32 = 130;
 
-/// Desktop vanilla starts with two coverage samples per pixel.
+/// Desktop vanilla starts with two coverage samples per pixel; mobile starts aliased.
+#[cfg(target_os = "android")]
+pub const DEFAULT_ANTI_ALIASING_SAMPLES: u32 = 1;
+#[cfg(not(target_os = "android"))]
 pub const DEFAULT_ANTI_ALIASING_SAMPLES: u32 = 2;
 /// Lowest supported world-rendering resolution relative to the output.
 pub const MIN_RENDER_SCALE_PERCENT: u8 = 10;
@@ -26,7 +29,11 @@ pub const MAX_RENDER_SCALE_PERCENT: u8 = 100;
 pub const DEFAULT_RENDER_SCALE_SHARPEN: bool = true;
 /// FSR1 RCAS sharpness in stops, where zero is strongest and each stop halves strength.
 pub const FSR_SHARPNESS_STOPS: f32 = 0.2;
-/// Native world resolution remains the default; menus and the HUD stay at output resolution.
+/// Native world resolution remains the desktop default; menus and the HUD stay at output resolution.
+/// Android renders at 65% and upscales with RCAS, the largest GPU win on Mali-class parts.
+#[cfg(target_os = "android")]
+pub const DEFAULT_RENDER_SCALE_PERCENT: u8 = 65;
+#[cfg(not(target_os = "android"))]
 pub const DEFAULT_RENDER_SCALE_PERCENT: u8 = MAX_RENDER_SCALE_PERCENT;
 #[path = "settings/render_distance.rs"]
 mod render_distance;
@@ -234,12 +241,25 @@ pub struct VideoSettings {
     pub full_detail_distance_chunks: u32,
 }
 
+/// Android caps presentation at 60 FPS: the panel may run at 120 Hz, and a fixed cap keeps
+/// sustained clocks and thermals stable on entry-level SoCs.
+fn default_frame_rate_limit() -> FrameRateLimit {
+    #[cfg(target_os = "android")]
+    {
+        FrameRateLimit::Fixed(std::num::NonZeroU16::new(60).expect("60 is non-zero"))
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        FrameRateLimit::default()
+    }
+}
+
 impl Default for VideoSettings {
     fn default() -> Self {
         Self {
             horizontal_fov_degrees: DEFAULT_FOV_DEGREES as f32,
             fullscreen: false,
-            frame_rate_limit: FrameRateLimit::default(),
+            frame_rate_limit: default_frame_rate_limit(),
             vsync: render_api::VsyncMode::DEFAULT,
             vrr: VrrPreference::Automatic,
             anti_aliasing_samples: DEFAULT_ANTI_ALIASING_SAMPLES,

@@ -48,7 +48,11 @@ export CINNABAR_BUILD_COMMIT="${CINNABAR_BUILD_COMMIT:-$(git rev-parse HEAD)}"
 
 # 16 KB pages: Android 15 devices may use them, and every LOAD segment must allow it.
 page_flags='-Wl,-z,max-page-size=16384'
-export RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=$page_flags"
+# Helio G81 Ultra (Honor X6C): Cortex-A75 + Cortex-A55 both implement ARMv8.2-A, so large
+# system extensions and the dot-product unit are safe and help meshing and renderer codegen.
+# Scope these to the Android target so host build scripts keep compiling for the CI machine.
+cpu_flags='-C target-cpu=cortex-a75 -C target-feature=+lse,+dotprod,+crc'
+export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS="${CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS:-} -C link-arg=$page_flags $cpu_flags"
 cargo ndk -t "$abi" --platform "$min_sdk" build --profile "$profile" --locked -p "$client_package"
 cargo ndk -t "$abi" --platform "$min_sdk" build --profile "$profile" --locked -p asset-compiler --bin assetc
 read -r worker worker_package < <(awk '$3 == "SHADERPACK_WORKER" {print $1, $2}' "$runtime_binary_list")

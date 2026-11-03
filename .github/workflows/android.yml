@@ -4,6 +4,13 @@ name: Android
 # demand, so the Android target keeps compiling. The APK is signed with a throwaway key per run;
 # installing a later build means uninstalling first.
 on:
+  push:
+    branches: [dev]
+    paths:
+      - packaging/android/**
+      - crates/ui/**
+      - Cargo.toml
+      - .github/workflows/android.yml
   pull_request:
     paths:
       - packaging/android/**
@@ -19,16 +26,22 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apk:
     name: Build arm64 APK
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 240
     env:
-      # Parallel codegen without LTO keeps this build affordable; releases use `release`.
+      # `play` plus in-place codegen overrides: thin LTO at eight units with stripped symbols
+      # is release-grade but still fits the job budget (full `release` is CU=1 and hours cold).
       CINNABAR_ANDROID_PROFILE: play
+      CARGO_PROFILE_PLAY_LTO: thin
+      CARGO_PROFILE_PLAY_CODEGEN_UNITS: "8"
+      CARGO_PROFILE_PLAY_STRIP: symbols
+      # Helio G81 Ultra (Cortex-A75 + A55, ARMv8.2-A): the Go core gets the same LSE atomics.
+      GOARM64: v8.2
       CARGO_INCREMENTAL: "0"
     steps:
       - uses: actions/checkout@v6
@@ -65,3 +78,16 @@ jobs:
           path: target/android/*-arm64-v8a.apk
           if-no-files-found: error
           retention-days: 14
+      # Public release asset so the APK can be sideloaded without downloading CI artifacts.
+      - name: Publish the sideloadable APK
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apk="$(ls target/android/*-arm64-v8a.apk | head -n1)"
+          gh release delete tuned-android --yes --cleanup-tag 2>/dev/null || true
+          gh release create tuned-android "$apk" \
+            --title "Cinnabar tuned for Honor X6C ($(git rev-parse --short HEAD))" \
+            --notes "arm64-v8a: Cortex-A75/A55 codegen, 65% render scale, 60 FPS cap, MSAA off, 6-chunk default distance." \
+            --prerelease
