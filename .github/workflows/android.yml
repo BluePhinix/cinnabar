@@ -1,8 +1,9 @@
 name: Android
 
-# Builds the experimental arm64 APK for Android packaging/release workflow changes, on CI's schedule and on
-# demand, so the Android target keeps compiling. The APK is signed with a throwaway key per run;
-# installing a later build means uninstalling first.
+# Builds the experimental arm64 APK on every push to dev that touches this build or its settings,
+# on Android packaging/release workflow changes, on CI's schedule and on demand, so the Android
+# target keeps compiling. The APK is signed with a throwaway key per run; installing a later build
+# means uninstalling first.
 on:
   push:
     branches: [dev]
