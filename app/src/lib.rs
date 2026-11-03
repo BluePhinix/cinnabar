@@ -87,6 +87,11 @@ mod tests;
 #[cfg(not(target_arch = "wasm32"))]
 static ALLOCATOR: test_alloc::CountingAllocator = test_alloc::CountingAllocator;
 
+// The Android cdylib has no `main.rs`, so the desktop binary's allocator never applies here.
+#[cfg(all(target_os = "android", feature = "mimalloc", not(test)))]
+#[global_allocator]
+static ANDROID_ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[cfg(not(target_arch = "wasm32"))]
 mod far_terrain;
 #[cfg(not(target_arch = "wasm32"))]

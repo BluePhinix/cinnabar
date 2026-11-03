@@ -51,7 +51,7 @@ page_flags='-Wl,-z,max-page-size=16384'
 # Helio G81 Ultra (Honor X6C): Cortex-A75 + Cortex-A55 both implement ARMv8.2-A, so large
 # system extensions and the dot-product unit are safe and help meshing and renderer codegen.
 # Scope these to the Android target so host build scripts keep compiling for the CI machine.
-cpu_flags='-C target-cpu=cortex-a75 -C target-feature=+lse,+dotprod,+crc'
+cpu_flags='-C target-cpu=cortex-a75 -C target-feature=+lse,+dotprod,+crc,+fullfp16'
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS="${CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS:-} -C link-arg=$page_flags $cpu_flags"
 cargo ndk -t "$abi" --platform "$min_sdk" build --profile "$profile" --locked -p "$client_package"
 cargo ndk -t "$abi" --platform "$min_sdk" build --profile "$profile" --locked -p asset-compiler --bin assetc

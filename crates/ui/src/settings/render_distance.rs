@@ -53,9 +53,9 @@ impl RenderDistanceDevice {
                 .min(MAX_DEVICE_DISTANCE as u32) as u8
         };
         let limit = native_maximum.min(graphics_limit).max(7);
-        // The shared-memory budget overestimates mobile GPUs; cap the first-launch pick on Android.
+        // The shared-memory budget overestimates mobile GPUs; start Android at the minimum.
         #[cfg(target_os = "android")]
-        let limit = limit.min(8);
+        let limit = limit.min(5);
         let recommended = (MIN_RENDER_DISTANCE_CHUNKS + (limit - MIN_RENDER_DISTANCE_CHUNKS) / 2)
             .min(native_maximum);
         RenderDistanceDefaults {

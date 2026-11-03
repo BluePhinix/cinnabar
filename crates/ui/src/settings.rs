@@ -30,9 +30,9 @@ pub const DEFAULT_RENDER_SCALE_SHARPEN: bool = true;
 /// FSR1 RCAS sharpness in stops, where zero is strongest and each stop halves strength.
 pub const FSR_SHARPNESS_STOPS: f32 = 0.2;
 /// Native world resolution remains the desktop default; menus and the HUD stay at output resolution.
-/// Android renders at 65% and upscales with RCAS, the largest GPU win on Mali-class parts.
+/// Android renders at 50% and upscales with RCAS, the largest GPU win on Mali-class parts.
 #[cfg(target_os = "android")]
-pub const DEFAULT_RENDER_SCALE_PERCENT: u8 = 65;
+pub const DEFAULT_RENDER_SCALE_PERCENT: u8 = 50;
 #[cfg(not(target_os = "android"))]
 pub const DEFAULT_RENDER_SCALE_PERCENT: u8 = MAX_RENDER_SCALE_PERCENT;
 #[path = "settings/render_distance.rs"]
@@ -332,7 +332,7 @@ impl RenderMode {
     pub fn parse(value: &str) -> Option<Self> {
         Self::ALL
             .into_iter()
-            .find(|mode| value.trim().eq_ignore_ascii_case(mode.as_str()))
+            .find(|mode| mode.value.trim().eq_ignore_ascii_case(mode.as_str()))
     }
 
     #[must_use]

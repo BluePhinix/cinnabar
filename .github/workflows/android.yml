@@ -33,14 +33,15 @@ jobs:
   apk:
     name: Build arm64 APK
     runs-on: ubuntu-24.04
-    timeout-minutes: 240
+    timeout-minutes: 360
     env:
-      # `play` plus in-place codegen overrides: thin LTO at eight units with stripped symbols
-      # is release-grade but still fits the job budget (full `release` is CU=1 and hours cold).
+      # `play` plus in-place codegen overrides: release-grade thin LTO at one codegen unit,
+      # stripped symbols and no split debug info. Cold builds take hours; the timeout allows it.
       CINNABAR_ANDROID_PROFILE: play
       CARGO_PROFILE_PLAY_LTO: thin
-      CARGO_PROFILE_PLAY_CODEGEN_UNITS: "8"
+      CARGO_PROFILE_PLAY_CODEGEN_UNITS: "1"
       CARGO_PROFILE_PLAY_STRIP: symbols
+      CARGO_PROFILE_PLAY_SPLIT_DEBUGINFO: "off"
       # Helio G81 Ultra (Cortex-A75 + A55, ARMv8.2-A): the Go core gets the same LSE atomics.
       GOARM64: v8.2
       CARGO_INCREMENTAL: "0"
@@ -90,5 +91,5 @@ jobs:
           gh release delete tuned-android --yes --cleanup-tag 2>/dev/null || true
           gh release create tuned-android "$apk" \
             --title "Cinnabar tuned for Honor X6C ($(git rev-parse --short HEAD))" \
-            --notes "arm64-v8a for Honor X6C: Cortex-A75/A55 codegen, 65% render scale, 60 FPS cap, MSAA off, 6-chunk default distance (the generic 6 GB heuristic picks 10)." \
+            --notes "arm64-v8a for Honor X6C: Cortex-A75/A55+FP16 codegen, CU=1 thin LTO, mimalloc, 50% render scale, 60 FPS cap, MSAA off, 5-chunk distance; GLES selectable in Video settings." \
             --prerelease
